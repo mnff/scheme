@@ -1,6 +1,11 @@
 
 ;;;SECTION 5.1.2
 
+(define (tagged-list? exp tag)
+  (if (pair? exp)
+      (eq? (car exp) tag)
+      false))
+
 (define (make-stack)
   (let ((s '())
         (number-pushes 0)
@@ -13,7 +18,7 @@
       (set! max-depth (max current-depth max-depth)))
     (define (pop)
       (if (null? s)
-          (error "Empty stack -- POP")
+          (error "Empty stack -- POP" "")
           (let ((top (car s)))
             (set! s (cdr s))
             (set! current-depth (- current-depth 1))
@@ -27,7 +32,8 @@
     (define (print-statistics)
       (newline)
       (display (list 'total-pushes  '= number-pushes
-                     'maximum-depth '= max-depth)))
+                     'maximum-depth '= max-depth))
+      (newline))
     (define (dispatch message)
       (cond ((eq? message 'push) push)
             ((eq? message 'pop) (pop))
@@ -51,7 +57,9 @@
         (the-instruction-sequence '()))
     (let ((the-ops
            (list (list 'initialize-stack
-                       (lambda () (stack 'initialize)))))
+                       (lambda () (stack 'initialize)))
+                 (list 'print-stack-statistics
+                       (lambda () (stack 'print-statistics)))))
           (register-table
            (list (list 'pc pc) (list 'flag flag))))
       (define (allocate-register name)
@@ -325,12 +333,37 @@
 (define (operation-exp-operands operation-exp)
   (cdr operation-exp))
 
-
 (define (lookup-prim symbol operations)
   (let ((val (assoc symbol operations)))
     (if val
         (cadr val)
         (error "Unknown operation -- ASSEMBLE" symbol))))
+
+(define (make-machine register-names ops controller-text)
+  (let ((machine (make-new-machine)))
+    (for-each (lambda (register-name)
+                ((machine 'allocate-register) register-name))
+              register-names)
+    ((machine 'install-operations) ops)    
+    ((machine 'install-instruction-sequence)
+     (assemble controller-text machine))
+    machine))
+
+(define (make-register name)
+  (let ((contents '*unassigned*))
+    (define (dispatch message)
+      (cond ((eq? message 'get) contents)
+            ((eq? message 'set)
+             (lambda (value) (set! contents value)))
+            (else
+             (error "Unknown request -- REGISTER" message))))
+    dispatch))
+
+(define (get-contents register)
+  (register 'get))
+
+(define (set-contents! register value)
+  ((register 'set) value))
 
 (define (remainder n d)
   (if (< n d)
@@ -339,21 +372,21 @@
 
 ;;FIGURE 5.6
 ;;;gcd程序的指令序列
-(controller
- test-b
-   (test (op =) (reg b) (const 0))
-   (branch (label gcd-done))
-   (assign t (reg a))
- rem-loop
-   (test (op <) (reg t) (reg b))
-   (branch (label rem-done))
-   (assign t (op -) (reg t) (reg b))
-   (goto (label rem-loop))
- rem-done
-   (assign a (reg b))
-   (assign b (reg t))
-   (goto (label test-b))
- gcd-done)
+;;;(controller
+ ;;;test-b
+   ;;;(test (op =) (reg b) (const 0))
+   ;;;(branch (label gcd-done))
+   ;;;(assign t (reg a))
+ ;;;rem-loop
+   ;;;(test (op <) (reg t) (reg b))
+   ;;;(branch (label rem-done))
+   ;;;(assign t (op -) (reg t) (reg b))
+   ;;;(goto (label rem-loop))
+ ;;;rem-done
+   ;;;(assign a (reg b))
+   ;;;(assign b (reg t))
+   ;;;(goto (label test-b))
+ ;;;gcd-done)
 
 ;;;计算gcd程序的机器
 (define gcd-machine
@@ -369,6 +402,23 @@
        (goto (label test-b))
      gcd-done)))
 
-(set-register-contents! gcd-machine 'a 206)
+;;;(set-register-contents! gcd-machine 'a 206)
 
-(set-register-contents! gcd-machine 'b 40)
+;;;(set-register-contents! gcd-machine 'b 40)
+
+;;;(start gcd-machine)
+
+;;;(get-register-contents gcd-machine 'a)
+
+(define (add a b)
+  (+ a b))
+
+(define add-machine
+  (make-machine
+   '(a b t)
+   (list (list 'rem remainder) (list '= =) (list 'add add))
+   '(start
+       (assign t (op add) (reg a) (reg b))
+       (perform (op print-stack-statistics))
+       (goto (label add-done))
+     add-done)))
