@@ -927,5 +927,11 @@
                       interpreter-operations
                       interpretor-text))
 (define the-global-environment (setup-environment))
+
+;可以在控制台试试解释器是否能工作了
 ;(start interpreter)
+;(define (fib n) (if (< n 2) n (+ (fib (- n 1)) (fib (- n 2))))) ;计算斐波拉切数列
+;(define (factorial n) (if (= n 1) 1 (* (factorial (- n 1)) n))) ;计算阶乘
+      
+      
 
