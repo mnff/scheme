@@ -376,25 +376,8 @@
       n
       (remainder (- n d) d)))
 
-;;FIGURE 5.6
-;;;gcd程序的指令序列
-;;;(controller
- ;;;test-b
-   ;;;(test (op =) (reg b) (const 0))
-   ;;;(branch (label gcd-done))
-   ;;;(assign t (reg a))
- ;;;rem-loop
-   ;;;(test (op <) (reg t) (reg b))
-   ;;;(branch (label rem-done))
-   ;;;(assign t (op -) (reg t) (reg b))
-   ;;;(goto (label rem-loop))
- ;;;rem-done
-   ;;;(assign a (reg b))
-   ;;;(assign b (reg t))
-   ;;;(goto (label test-b))
- ;;;gcd-done)
 
-;;;计算gcd程序的机器
+;;;;;;;;;;;计算gcd程序的机器模拟;;;;;;;;;;;;;;;
 (define gcd-machine
   (make-machine
    '(a b t)
@@ -416,6 +399,8 @@
 
 ;;;(get-register-contents gcd-machine 'a)
 
+
+;;;;;;;;;;;计算加法程序的机器模拟;;;;;;;;;;;;;
 (define (add a b)
   (+ a b))
 
@@ -609,7 +594,7 @@
   (set-car! frame (cons var (car frame)))
   (set-cdr! frame (cons val (cdr frame))))
 
-;;;内置环境
+;;;基本运算符
 (define primitive-procedures
   (list (list 'car car)
         (list 'cdr cdr)
@@ -942,6 +927,5 @@
                       interpreter-operations
                       interpretor-text))
 (define the-global-environment (setup-environment))
-
-
+;(start interpreter)
 
