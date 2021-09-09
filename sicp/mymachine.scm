@@ -354,17 +354,22 @@
     ((machine 'install-instruction-sequence) (assemble controller-text machine))
     machine))
 
-(define (add a b)
-  (+ a b))
+(define (remainder n d) (if (< n d) n (remainder (- n d) d)))
 
-(define add-machine
+(define gcd-machine
   (make-machine
-    '(a b c)
-    (list (list 'add add))
-    '(start
-      (assign c (op add) (reg a) (reg b)))))
+   '(a b t)
+   (list (list 'rem remainder) (list '= =))
+   '(test-b
+       (test (op =) (reg b) (const 0))
+       (branch (label gcd-done))
+       (assign t (op rem) (reg a) (reg b))
+       (assign a (reg b))
+       (assign b (reg t))
+       (goto (label test-b))
+     gcd-done)))
 
-;(set-register-contents! add-machine 'a 100)
-;(set-register-contents! add-machine 'b 200)
-;(add-machine 'start)
-;(get-register-contents add-machine 'c)
+;(set-register-contents! gcd-machine 'a 100)
+;(set-register-contents! gcd-machine 'b 200)
+;(gcd-machine 'start)
+;(get-register-contents gcd-machine 'a)
